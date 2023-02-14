@@ -31,9 +31,11 @@ def calculate_RMS_Error(X, y, theta):
     E_rms = 0
     E_err = 0
     n = X.shape[0]
+    d = X.shape[1]
     for i in range(n):
-        E_err += (np.dot(theta, X[i]) - y[i])**2
-    E_rms = np.sqrt(E_err/n)
+        y_pred = np.dot(theta, X[i])
+        E_err += (y[i] - y_pred)**2
+    E_rms = np.sqrt((E_err/n)) 
     return E_rms
 
 
@@ -166,7 +168,7 @@ def closed_form_optimization(X, y, reg_param=0):
     d = X.shape[1]
     theta = np.zeros((d,))
 
-    theta = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X) + np.identity(d) * reg_param), X.T), y) + (reg_param / 2)
+    theta = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X) + (reg_param * np.identity(d))), X.T), y)
     return theta
 
 
@@ -223,21 +225,22 @@ def part_2_2(fname_train, fname_validation):
     errors_train = np.zeros((10,))
     errors_validation = np.zeros((10,))
     L = np.append([0], 10.0 ** np.arange(-8, 1))
+
     # Add your code here
     best_score = 10000000000000
     best_theta = 0
     for lam in L:
         temp_theta = closed_form_optimization(generate_polynomial_features(X_train, 10), y_train, lam)
-        temp_score = calculate_empirical_risk(generate_polynomial_features(X_train, 10), y_train, temp_theta)
-
+        temp_score = calculate_RMS_Error(generate_polynomial_features(X_train, 10), y_train, temp_theta)
         if(temp_score < best_score):
             best_score = temp_score
             best_theta = temp_theta
-
-    for i in range(10):
-        theta = closed_form_optimization(generate_polynomial_features(X_train, 10), y_train, L[i])
-        errors_train[i] = calculate_RMS_Error(generate_polynomial_features(X_train, 10), y_train, theta)
-        errors_validation[i] = calculate_RMS_Error(generate_polynomial_features(X_validation, 10), y_validation, theta)
+    
+    
+    for i in range(len(L)):
+        temp_theta = closed_form_optimization(generate_polynomial_features(X_train, 10), y_train, L[i])
+        errors_train[i] = calculate_RMS_Error(generate_polynomial_features(X_train, 10), y_train, temp_theta)
+        errors_validation[i] = calculate_RMS_Error(generate_polynomial_features(X_validation, 10), y_validation, temp_theta)
 
     plt.figure()
     plt.plot(L, errors_train, '-or', label='Train')
